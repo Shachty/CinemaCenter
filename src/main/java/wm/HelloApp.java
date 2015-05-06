@@ -2,6 +2,7 @@ package wm;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.camel.CamelContext;
+import org.apache.camel.LoggingLevel;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jms.JmsComponent;
@@ -15,28 +16,27 @@ import javax.jms.ConnectionFactory;
 public class HelloApp {
     public static String url = ActiveMQConnection.DEFAULT_BROKER_URL;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         ApplicationContext context = new ClassPathXmlApplicationContext("spring-config.xml");
-        HelloService helloService = context.getBean(HelloService.class);
-        System.out.println(helloService.sayHello());
+
 
         CamelContext camelContext = new DefaultCamelContext();
 
-        ProducerTemplate template = camelContext.createProducerTemplate();
+        // ProducerTemplate template = camelContext.createProducerTemplate();
 
-        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("vm://localhost?broker.persistent=false");
+        // ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("vm://localhost?broker.persistent=false");
 // Note we can explicit name the component
-        camelContext.addComponent("test-jms", JmsComponent.jmsComponentAutoAcknowledge(connectionFactory));
+        //   camelContext.addComponent("test-jms", JmsComponent.jmsComponentAutoAcknowledge(connectionFactory));
 
-        for (int i = 0; i < 10; i++) {
+       /* for (int i = 0; i < 10; i++) {
             template.sendBody("test-jms:queue:test.queue", "Test Message: " + i);
         }
+*/
 
-        try {
-            camelContext.addRoutes(new RouteBuilder() {
-                    public void configure() {
-                        from("test-jms:queue:test.queue").to("file:test?autoCreate=true");
-
+        camelContext.addRoutes(new RouteBuilder() {
+            public void configure() {
+                from("file:/tmp/in?noop=true").to("file:/tmp/out");
+/*
                         from("direct:cafe")
                                 .split().method("orderSplitter").to("direct:drink");
 
@@ -45,17 +45,22 @@ public class HelloApp {
                         from("seda:coldDrinks?concurrentConsumers=2").to("bean:barista?method=prepareColdDrink").to("direct:deliveries");
                         from("seda:hotDrinks?concurrentConsumers=3").to("bean:barista?method=prepareHotDrink").to("direct:deliveries");
 
-                        /*from("direct:deliveries")
+                        from("direct:deliveries")
                                 .aggregate(new CafeAggregationStrategy()).method("waiter", "checkOrder").completionTimeout(5 * 1000L)
                                 .to("bean:waiter?method=prepareDelivery")
                                 .to("bean:waiter?method=deliverCafes");
                                 */
-                    }
-                });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            }
+        });
+        // Start the Camel route
+        camelContext.start();
 
+        HelloService helloService = context.getBean(HelloService.class);
+        System.out.println(helloService.sayHello());
+
+        // Wait five minutes, then stop
+        Thread.sleep (60*5*1000);
+        camelContext.stop ();
 
 
     }
