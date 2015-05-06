@@ -7,6 +7,7 @@ import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jms.JmsComponent;
 import org.apache.camel.impl.DefaultCamelContext;
+import org.apache.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.apache.activemq.ActiveMQConnection;
@@ -16,9 +17,12 @@ import javax.jms.ConnectionFactory;
 public class HelloApp {
     public static String url = ActiveMQConnection.DEFAULT_BROKER_URL;
 
+    final static Logger logger = Logger.getLogger(HelloApp.class);
+
     public static void main(String[] args) throws Exception {
         ApplicationContext context = new ClassPathXmlApplicationContext("spring-config.xml");
 
+        logger.info("Hello log!");
 
         CamelContext camelContext = new DefaultCamelContext();
 
@@ -59,7 +63,7 @@ public class HelloApp {
         System.out.println(helloService.sayHello());
 
         // Wait five minutes, then stop
-        Thread.sleep (60*5*1000);
+        Thread.sleep(60 * 5 * 1000);
         camelContext.stop ();
 
 
